@@ -1,0 +1,292 @@
+#####################################
+from Bio import SeqIO
+import glob
+import os
+from Bio import Entrez
+Entrez.mail = "fwolters@uni-bremen.de"
+# import time
+#####################################
+
+
+# insert .gbk file folder name (full path if not in same folder)
+gbks = glob.glob(os.path.join("Example.gbk","*.gbk")) 
+
+
+
+for i in gbks:
+    gbk_filename = ("%s" % i)
+    faa_filename = ("%s_protein-seq.fasta" % i)
+    ID_filename = ("%s_protein-IDs.txt" % i ) # protein IDs
+    CDS_filename = ("%s.CDS.txt" % i) # complete locus CDS nucleotide sequence
+    #Loc_filename = ("%s_Loc.txt" % i) # context (location coordinates to extract nucleotide sequences from region)
+
+    input_handle  = open(gbk_filename, "r")
+    output_handle = open(faa_filename, "w")
+    ID_output_handle = open (ID_filename,"w") # protein IDs
+    CDS_filename_handle = open(CDS_filename, "w") # complete locus CDS nucleotide sequence
+    #Loc_filename_handle = open(Loc_filename, "w") # context 
+    
+    with open(i):
+        print('-------------------------------------------------\n\n')
+        for seq_record in SeqIO.parse(input_handle, "genbank") :
+            
+            #print(seq_record.seq) 
+            CDS_filename_handle.write(">%s_%s_\n%s\n " % (
+                seq_record.name,
+                seq_record.description,
+                seq_record.seq))
+            
+            CDS_filename_handle.close()
+            
+            #########################################################
+           #  Convert organism name in .gbk to 3-letter species code
+            ########################################################
+            
+            for seq_feature in seq_record.features :
+                if seq_feature.type=="SOURCE":
+                    organisms = seq_feature.qualifiers['organism']
+                    print("---------------\nOrganism: %s\n---------------\n" % (organisms[0]))
+                    for name in organisms:
+                        for u in name:
+                           if u == " ":
+                               j = name.index(u)
+                               k = j+1
+                               l = k+1
+                              
+                               lcode = ("%s%s%s" % (
+                                organisms[0][0],name[k], name[l]))
+
+                               
+                               # Problems: 
+                               # 1) If names consist of species name & subspecies name 
+                               # i.e. two names, only three-letter-code of first species name is used.
+                               # 2) Scaffolds of different cultivars cannot be distinguished.
+                               # As a possible solution, BioProject ID will be added.
+                               # --> Will be solved in next version.
+                               
+                               break
+                       
+            ##########################################################
+           
+            
+                    
+                if seq_feature.type=="CDS":
+                    seq_feature.qualifiers.setdefault('pseudo', default = False)
+                    
+                    # if .gbk files include pseudo-gene labels, no 'translation' qualifiers are available.
+                    # important for fetched sequences including intermediate genes. -> Set default False key for
+                    # all entries if 'pseudo' qualifier label is NA.
+                    
+                    # Extract .gbk file name from path string
+                    ffname = i.partition('\\')
+                    fname = ffname[2]
+                    rfname = fname.partition('.')
+                    sfname = rfname[0]
+                    print("Extracted sequences from .gbk file: %s\n" % (sfname))
+                
+                    
+                    if seq_feature.qualifiers['pseudo'] == False:
+
+                        output_handle.write(">%s_%s_%s\n%s\n" % (
+                            
+                            # three-letter code organism name
+                            lcode,
+                            
+                            # protein-ID
+                            seq_feature.qualifiers['protein_id'][0], 
+                            # seq_feature.qualifiers['cluster_role'][0]
+                            # Add if .gbk files include intermediate genes, in this case not forget to also add '%s'
+                            
+                            # filename 
+                            sfname,
+                           
+                            # Sequence
+                            seq_feature.qualifiers['translation'][0]))
+
+                        # For Coordinate file, needed for nucleotide sequence extraction of a given CDS 
+                        # ('# CDS_files')
+                        # Loc_filename_handle.write("%s_nuc\n%s..%s\n" % (
+                        #     seq_feature.qualifiers['protein_id'][0],
+                        #     seq_feature.location.start,
+                        #     seq_feature.location.end))
+
+                        # Extract protein-ids, needed to fetch nucleotide sequences via ELink-nucleotide-ID assignement
+                        # ('ID_files')
+                        ID_output_handle.write("%s\n" % (
+                            seq_feature.qualifiers['protein_id'][0]))
+                            
+                    
+    print('Sequence extraction complete\n------------------------------------------------------------\n')            
+    output_handle.close()
+    input_handle.close()
+    ID_output_handle.close() # protein IDs
+    CDS_filename_handle.close() # complete locus CDS nucleotide sequence
+    # Loc_filename_handle.close() # context 
+    
+    
+    
+files = glob.glob(os.path.join("Example.gbk", "*.gbk_protein-seq.fasta")) # Protein sequences
+ID_files = glob.glob(os.path.join("Example.gbk", "*gbk_protein-IDs.txt")) # protein IDs
+CDS_files = glob.glob(os.path.join("Example.gbk", "*.CDS.txt"))# complete locus CDS nucleotide sequence
+# nuc_files = glob.glob(os.path.join("Example.gbk", "*_Loc.txt")) # nucleotide sequences, dependent on context
+conc_filename = ("concatenated_sequences_protein.fasta") # Protein sequences
+conc_ID_filename = ("concatenated_protein_IDs.txt") # protein IDs
+conc_CSD_filename = ("Concatenated_CDS.txt") # complete locus CDS nucleotide sequence
+# conc_nuc_filename = ("conc_nucs.txt")  # nucleotide sequences, dependent on context
+conc_output = open(conc_filename, "w") # Protein sequences
+ID_output = open(conc_ID_filename, "w") # protein IDs
+CDS_output = open(conc_CSD_filename, "w") # complete locus CDS nucleotide sequence
+# nuc_output = open(conc_nuc_filename, "w")  # nucleotide sequences, dependent on context
+
+with conc_output as outfile:
+    for fname in files:
+        with open(fname) as infile:
+            for line in infile:
+                        outfile.write(
+                        line)
+    outfile.close()
+
+# wite concatenated protein IDs to .txt file
+with CDS_output as outfile:
+    for fname in CDS_files:
+        with open(fname) as infile:
+            for line in infile:
+                        outfile.write(
+                        line)
+    outfile.close()
+       
+#wite concatenated CDS to .txt file 
+with ID_output as outfile:
+    for fname in ID_files:
+        with open(fname) as infile:
+            for line in infile:
+                        outfile.write(
+                        line)
+    outfile.close()
+
+# #wite concatenated nucleotide sequences retrieved from CDS to .txt file ## IN PROGRESS       
+# with open("conc_nucs.txt", 'w') as outfile:
+#     for fname in ID_files:
+#         with open(fname) as infile:
+#             for line in infile:
+#                         outfile.write(
+#                         line)
+#     outfile.close()
+
+
+
+####################################################################################################################################
+
+
+
+
+##########################################################################
+# Query nucleotide fasta from NCBI protein ID list
+##########################################################################
+    # The following part of this script (Entrez Efetch) is based on: https://www.biostars.org/p/64078/
+    # Modifications: Adaptation to python 3.10; changes in extraction loop for mRNAs; write to/load mRNA-ids from 
+    # file (changes in Enrez Epost procedure etc.)
+    
+
+ID_list_in = ("concatenated_protein_IDs.txt") 
+in_handle  = open(ID_list_in, "r")
+
+
+
+ 
+# #ESearch
+
+# # BE CAREFUL TO NOT ABUSE THE NCBI SYSTEM.
+# # see http://biopython.org/DIST/docs/tutorial/Tutorial.html#sec119 for information.
+# # For example, if searching with more than 100 records, you'd need to do this ESearch step
+# # on weekends or outside USA peak times.   
+ 
+protein_gi_numbers = []
+
+# # Retrieve UIDs of proteins via Entrez.search
+
+for accn in in_handle :
+    esearch_handle = Entrez.esearch(db="protein", term=accn)
+    esearch_result= Entrez.read(esearch_handle)
+    esearch_handle.close()
+    protein_gi_numbers.append(esearch_result["IdList"][0])   
+
+# # Link UID IDs to mRNA IDs via Entrez.elink
+in_handle.close()
+    
+retrieved_mRNA_uids = []
+
+# #ELink
+handle = Entrez.elink(dbfrom="protein", db="nuccore", LinkName="protein_nuccore", id=protein_gi_numbers)
+result = Entrez.read(handle)
+#print(result)
+handle.close()
+
+
+print('\n-----------------------------------------------------\n')
+print("Following mRNA IDs were retrieved via ELink from NCBI:\n")
+   
+
+##Extract mRNA IDs and write to file.     
+for entry in result:
+    #print (len(entry['LinkSetDb']))
+    if len(entry['LinkSetDb']) == 1:      
+        #print(entry["LinkSetDb"][0]['Link'][0]['Id'])
+        mrna_id = entry["LinkSetDb"][0]['Link'][0]['Id']
+        print(mrna_id)
+        retrieved_mRNA_uids.append(mrna_id)
+
+
+
+with open("conc_IDs_Nucleotide_mrna.txt", 'w') as outfile:
+    outfile.write("%s\n" % (  
+    retrieved_mRNA_uids))
+    outfile.close()
+        
+    
+
+#EPost
+
+epost_handle = Entrez.epost(db="nuccore", id=mrna_id)
+epost_result = Entrez.read(epost_handle)
+
+epost_handle.close()
+
+webenv = epost_result["WebEnv"]
+query_key = epost_result["QueryKey"]
+    
+  
+
+
+#EFetch
+
+count = 1 # Set count for maximum sequences for fetching.
+batch_size = 1
+the_records = ""
+
+for start in range(0, count, batch_size):
+    end = min(count, start + batch_size)
+    print("\n\nFetching records %i thru %i...\n" % (start + 1, end))
+    fetch_handle = Entrez.efetch(db="nuccore",
+                                  rettype="fasta", retmode="text",
+                                  retstart=start, retmax=batch_size,
+                                  webenv=webenv,
+                                  query_key=query_key)
+    
+    data = fetch_handle.read()
+    fetch_handle.close()
+    the_records = the_records + data
+    print(the_records)
+    # time.sleep(60) # If >20 sequences, activate time.sleep (60 seconds)
+
+
+with open("concatenated_mRNA.fasta", 'w') as outfile:
+    outfile.write("%s\n\n" % (  
+        the_records))
+    outfile.close()
+
+print("Complete")
+
+
+
+
