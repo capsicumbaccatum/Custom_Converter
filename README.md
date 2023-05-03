@@ -22,11 +22,12 @@ Isolate
  
 # 2) Fast custom Gbk format and sequence name converter
 
-Bio, eqIO
-glob
-os
-Bio, Entrez
-(time)
+- Bio 
+- eqIO
+- glob
+- os
+- Bio, Entrez
+- (time)
 
 ## Input
 GenBank files, located in a single folder.
