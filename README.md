@@ -56,7 +56,8 @@ Created on Thu Aug 25 18:18:35 2022
 
  3) Input format: GenBank files, located in a single folder. 
  4) Output concatenated sequences and IDs:       
-	 1) i) 'concatenated_sequences_protein.fasta'  
+ 
+	    i) 'concatenated_sequences_protein.fasta'  
             Extracted protein-sequences with assigned three-letter code for organism-name &            '
 > file-name for each record in single .gbk files (one file per .gbk file & concatenated file) 
  
