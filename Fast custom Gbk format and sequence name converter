@@ -1,0 +1,190 @@
+"""
+Created on Sat Jan 14 15:22:03 2023
+
+@author: Darkin 
+
+"""
+
+
+from Bio import Entrez
+import numpy as np
+
+Entrez.email = "fwolters@uni-bremen.de" # Always provide your email when using Entrez
+
+
+handle = Entrez.esearch(db="assembly", term="Brassicaceae[ORGN]", retmin = 300, retmax = 4500)
+record = Entrez.read(handle)
+    
+UIDs = record['IdList']
+
+print('Genome assemblies found (NCBI):', len(UIDs))
+
+print('UIDs Genbank:', UIDs)
+
+# Retrieve in batch for large rets
+
+
+
+
+
+# dbs = Entrez.read(Entrez.einfo(db="assembly"))
+# print(dbs)
+# count = record['Count']
+# print(record)
+# species = record["IdList"]
+# print(species)
+
+#########################################################################
+
+handle_filename = ("Brassicaceae-As.txt") 
+input_handle  = open(handle_filename, "w")
+#full_entry_filename = ("Full_Summary-entry_Brassicales.txt")
+#zwischen_handle = open(full_entry_filename, "w")
+
+print("Total UID list: ", len(UIDs))
+input_handle.write("Organism\tAssembly-name\tTaxid\tGenbank-Release-Date\tCoverage\tAssembly-status\tContigN50\tScaffoldN50\tBioSampleAccn\tIsolate\tBioprojectId\tBioSampleId\tBioprojectAccn\tBUSCO\tSub_type\tSub_value")
+
+# count = len(UIDs) # Set count for maximum sequences for fetching.
+# batch_size = 15
+
+
+# for start in range(0, count, batch_size):
+#     end = min(count, start + batch_size)
+#     print("\n\nFetching records %i thru %i...\n" % (start + 1, end))
+    
+    
+for id in UIDs:
+    searchhandle = Entrez.esummary(db="assembly", id= id )
+    searchsummary = Entrez.read(searchhandle, validate=False)
+    Infra = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Biosource']['InfraspeciesList']
+    GB_BioProjects = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['GB_BioProjects'])
+    SampleId = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['BioSampleId'])
+    elBUSCO = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Busco']['Complete'])
+   
+    # RefSeqCat = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['RefSeq_category']
+    
+        
+    #print(searchsummary) # turn off for silence
+    #zwischen_handle.write("\n%s" % (searchsummary))
+    sep = ' '
+    Orgfull = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Organism'])
+    Org1 = Orgfull.split(sep, 2)[0]
+    Org2 = Orgfull.split(sep, 2)[1]
+    
+    print(Org1, Org2)
+    Isolate = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Biosource']['Isolate']
+    Assemblyname = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['AssemblyAccession']
+    txid = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Taxid']
+    GenbankRelease = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['AsmReleaseDate_GenBank']
+    Coverage = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Coverage']
+    ContigN50 = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['ContigN50']
+    ScaffoldN50 = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['ScaffoldN50']
+    Assemblystatus = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['AssemblyStatus'])
+    BioSampleAccn = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['BioSampleAccn'])
+    input_handle.write ("\n%s %s \t%s \t%s \t%s \t%s \t%s \t%s \t%s \t%s \t%s"
+           % (Org1,Org2, Assemblyname, txid, GenbankRelease, Coverage, Assemblystatus, ContigN50, ScaffoldN50, BioSampleAccn, Isolate))
+    
+    if len(GB_BioProjects) > 0:
+        BioprojectId = (GB_BioProjects[0]['BioprojectId'])
+        BioprojectAccn = (GB_BioProjects[0]['BioprojectAccn'])
+        input_handle.write("\t%s \t%s" % (BioprojectId,BioprojectAccn))
+    elif len(GB_BioProjects) == 0:
+        input_handle.write("\tNA\tNA")
+    
+    if len(SampleId) > 0:
+        BioSampleId = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['BioSampleId'])
+        input_handle.write("\t%s" % (BioSampleId))
+    elif len(SampleId) == 0:
+            input_handle.write("\tNA")
+    
+    if len (elBUSCO) > 0:
+        BUSCO = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Busco']['Complete'])
+        input_handle.write("\t%s" % (elBUSCO))
+    elif len(elBUSCO) == 0:
+        input_handle.write("\tNA")
+    
+    if len(Infra) > 0:
+        Sub_type = Infra[0]['Sub_type']
+        Sub_value = Infra[0]['Sub_value']
+        input_handle.write("\t%s \t%s" % (Sub_type, Sub_value))
+    elif len(Infra) == 0:
+            input_handle.write("\tNA\tNA")
+  
+                
+         
+input_handle.close()
+
+
+######################################################################
+# Filter
+# RefSeq_category
+####################################################################
+
+
+
+handle_filename = ("Brassicaceae-As_RefSeq.txt") 
+input_handle  = open(handle_filename, "w")
+
+print("Total UID list: ", len(UIDs), "Retrieve Summary from:")
+input_handle.write("Organism\tAssembly-name\tTaxid\tGenbank-Release-Date\tCoverage\tAssembly-status\tContigN50\tScaffoldN50\tBioSampleAccn\tBioprojectId\tBioSampleId\tBioprojectAccn\tBUSCO\tIsolate\tSub_type\tSub_value")
+
+
+for id in UIDs:
+    searchhandle = Entrez.esummary(db="assembly", id= id )
+    searchsummary = Entrez.read(searchhandle, validate=False)
+    Infra = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Biosource']['InfraspeciesList']
+    RefSeqCat = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['RefSeq_category']
+    
+    if RefSeqCat == 'representative genome':
+          
+    
+        print(searchsummary) # turn off for silence
+        #zwischen_handle.write("\n%s" % (searchsummary))
+        sep = ' '
+        Orgfull = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Organism'])
+        Org1 = Orgfull.split(sep, 2)[0]
+        Org2 = Orgfull.split(sep, 2)[1]
+        
+        print(Org1, Org2)
+        Isolate = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Biosource']['Isolate']
+        Assemblyname = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['AssemblyAccession']
+        txid = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Taxid']
+        GenbankRelease = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['AsmReleaseDate_GenBank']
+        Coverage = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Coverage']
+        ContigN50 = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['ContigN50']
+        ScaffoldN50 = searchsummary['DocumentSummarySet']['DocumentSummary'][0]['ScaffoldN50']
+        Assemblystatus = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['AssemblyStatus'])
+        BioSampleAccn = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['BioSampleAccn'])
+        BioprojectId = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['GB_BioProjects'][0]['BioprojectId'])
+        BioSampleId = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['BioSampleId'])
+        BioprojectAccn = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['GB_BioProjects'][0]['BioprojectAccn'])
+        BUSCO = (searchsummary['DocumentSummarySet']['DocumentSummary'][0]['Busco']['Complete'])
+        input_handle.write ("\n%s %s \t%s \t%s \t%s \t%s \t%s \t%s \t%s \t%s \t%s \t%s \t%s \t%s \t%s"
+               % (Org1,Org2, Assemblyname, txid, GenbankRelease, Coverage, Assemblystatus, ContigN50, ScaffoldN50, BioSampleAccn, BioprojectId, BioSampleId, BioprojectAccn ,BUSCO, Isolate))
+        
+        
+        if len(Infra) > 0:
+            Sub_type = Infra[0]['Sub_type']
+            Sub_value = Infra[0]['Sub_value']
+            input_handle.write("\t%s \t%s" % (Sub_type, Sub_value))
+  
+                
+                
+                
+        
+
+input_handle.close()
+
+
+#############################################################################
+
+# General taxonomy info query
+handle = Entrez.esearch(db="taxonomy", term="Brassicaceae[ORGN]", retmin = 30, retmax = 9000)
+record = Entrez.read(handle)
+    
+UIDs = record['IdList']
+print(UIDs)
+print(len(UIDs))
+
+
+
