@@ -46,10 +46,14 @@ Created on Thu Aug 25 18:18:35 2022
   
   
  ## Main function: 
- 1) Concatenate all extracted files (Genbank format .gbk) into 1 fasta     
+ 
+ 1) Concatenate all extracted files (Genbank format .gbk) into 1 fasta   
+  
 > Important: Assigns three-letter code of organism-names, and file-names to each sequence 
+
  2) Concatenate all protein IDs into one .txt file. Needed to fetch nucleotide sequences from NCBI.    
 > However, nucleotide-sequences can also be retrieved from available CDS in .gbk file 
+
  3) Input format: GenBank files, located in a single folder. 
  4) Output concatenated sequences and IDs:       
 	 1) i) 'concatenated_sequences_protein.fasta'  
