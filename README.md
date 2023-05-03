@@ -54,15 +54,19 @@ Created on Thu Aug 25 18:18:35 2022
  4) Output concatenated sequences and IDs:       
 	 1) i) 'concatenated_sequences_protein.fasta'  
             Extracted protein-sequences with assigned three-letter code for organism-name &            '
-> file-name for each record in single .gbk files (one file per .gbk file & concatenated file)  
+> file-name for each record in single .gbk files (one file per .gbk file & concatenated file) 
+ 
             ii) 'concatenated_protein_IDs.txt'            
-            Concatenated file of all .gbk file sequence record IDs       
+            Concatenated file of all .gbk file sequence record IDs  
+     
             iii) 'conc_IDs_Nucleotide_mrna.fasta'            
-            Concatenated mRNA IDs to fetch nucleotide sequences from NCBI, using ELink:            
-            If corresponding nucleotide IDs link to whole genome/chromosome assemblies,            
-> Entrez EFetch may crash for >20 sequences.        
-            iv) 'concatenated_mRNA.fasta'  
+> Concatenated mRNA IDs to fetch nucleotide sequences from NCBI, using ELink:            
+> If corresponding nucleotide IDs link to whole genome/chromosome assemblies, Entrez EFetch may crash for >20 sequences.        
+            
+	    iv) 'concatenated_mRNA.fasta'  
             = Concatenated fetched nucleotide fasta sequences retrieved via Entrez search       
-             v) 'Concatenated_CDS.txt'            
+             
+	     v) 'Concatenated_CDS.txt'            
              = Concatenated complete CDS of all given .gbk files5) Output per .gbk file:  
+	     
 > Protein fasta sequences, protein IDs & CDS, and location on CDS per given .gbk file 
