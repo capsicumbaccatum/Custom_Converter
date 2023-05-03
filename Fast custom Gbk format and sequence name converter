@@ -1,9 +1,9 @@
-#####################################
+am#####################################
 from Bio import SeqIO
 import glob
 import os
 from Bio import Entrez
-Entrez.mail = "fwolters@uni-bremen.de"
+Entrez.mail = "ex.ample@example.com"
 # import time
 #####################################
 
