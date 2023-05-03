@@ -26,7 +26,7 @@ Bio, eqIO
 glob
 os
 Bio, Entrez
-time
+(time)
 
 ## Input
 GenBank files, located in a single folder.
